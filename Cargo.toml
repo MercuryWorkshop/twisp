@@ -1,0 +1,3 @@
+[workspace]
+members = ["twisp", "twisptest"]
+resolver = "2"
