@@ -9,7 +9,7 @@ use futures_util::TryFutureExt;
 use http_body_util::Empty;
 use hyper::{body::Incoming, server::conn::http1, service::service_fn, Request, Response};
 use hyper_util::rt::TokioIo;
-use log::{error, info};
+use log::{error, info, LevelFilter};
 use pty_process::{Command, Pty, Size};
 use tokio::{io::copy_bidirectional, net::TcpListener};
 use wisp_mux::{CloseReason, ConnectPacket, MuxStream, ServerMux, StreamType};
@@ -99,7 +99,7 @@ async fn upgrade_ws(req: Request<Incoming>) -> result::Result<Response<Empty<Byt
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::Builder::new().filter_level(LevelFilter::Info).parse_env("RUST_LOG").init();
     let args = Cli::parse();
 
     if let Some(bind) = args.backend.bind {
@@ -123,6 +123,8 @@ async fn main() -> Result<()> {
         let (mux, fut) = ServerMux::new(rx, tx, u32::MAX);
 
         tokio::spawn(fut);
+
+        info!("Connected to pty {:?}", pty);
 
         handle_mux(mux).await?;
     } else {
