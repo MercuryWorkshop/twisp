@@ -1024,6 +1024,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "log",
+ "nix",
  "pty-process",
  "tokio",
  "tokio-util",
