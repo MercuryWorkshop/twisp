@@ -7,7 +7,6 @@ use std::{
     net::SocketAddr,
     os::fd::{AsRawFd, RawFd},
     path::PathBuf,
-    process::abort,
     result,
     sync::Arc,
 };
@@ -23,6 +22,7 @@ use hyper_util::rt::TokioIo;
 use log::{error, info, LevelFilter};
 use pty_process::{Command, Pty, Size};
 use tokio::{io::copy_bidirectional, net::TcpListener, sync::Mutex};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use wisp_mux::{
     extensions::{AnyProtocolExtension, ProtocolExtension, ProtocolExtensionBuilder},
     ws::{LockedWebSocketWrite, WebSocketRead},
@@ -95,7 +95,10 @@ impl ProtocolExtension for TWispServerProtocolExtension {
         let row = packet.get_u16_le();
         let col = packet.get_u16_le();
 
-        info!("received request to resize stream_id {:?} to {}x{}", stream_id, row, col);
+        info!(
+            "received request to resize stream_id {:?} to {}x{}",
+            stream_id, row, col
+        );
 
         if let Some(pty) = self.0.lock().await.get(&stream_id) {
             if let Err(err) = set_term_size(*pty, Size::new(row, col)) {
@@ -156,7 +159,7 @@ async fn handle_muxstream(
 ) -> Result<()> {
     if connect.stream_type == StreamType::Unknown(STREAM_TYPE_TERM) {
         let id = stream.stream_id;
-        let mut stream = stream.into_io().into_asyncrw();
+        let mut stream = stream.into_io().into_asyncrw().compat();
         let mut pty = Pty::new()?;
         let pts = pty.pts()?;
         pty.resize(Size::new(24, 80))?;
@@ -205,22 +208,15 @@ async fn handle_ws(fut: upgrade::UpgradeFut) -> Result<()> {
 
     let map = Arc::new(Mutex::new(HashMap::new()));
 
-    let (mux, fut) = ServerMux::new(
+    let (mux, fut) = ServerMux::create(
         rx,
         tx,
         u32::MAX,
         Some(&[Box::new(TWispServerProtocolExtensionBuilder(map.clone()))]),
     )
+    .await?
+    .with_required_extensions(&[TWispServerProtocolExtension::ID])
     .await?;
-
-    if !mux
-        .supported_extension_ids
-        .iter()
-        .any(|x| *x == TWispServerProtocolExtension::ID)
-    {
-        error!("TWisp extension unsupported by client");
-        return Ok(());
-    }
 
     tokio::spawn(fut);
 
@@ -268,22 +264,15 @@ async fn main() -> Result<()> {
 
         let map = Arc::new(Mutex::new(HashMap::new()));
 
-        let (mux, fut) = ServerMux::new(
+        let (mux, fut) = ServerMux::create(
             rx,
             tx,
             u32::MAX,
             Some(&[Box::new(TWispServerProtocolExtensionBuilder(map.clone()))]),
         )
+        .await?
+        .with_required_extensions(&[TWispServerProtocolExtension::ID])
         .await?;
-
-        if !mux
-            .supported_extension_ids
-            .iter()
-            .any(|x| *x == TWispServerProtocolExtension::ID)
-        {
-            error!("TWisp extension unsupported by client");
-            abort();
-        }
 
         tokio::spawn(fut);
 

@@ -55,7 +55,7 @@ impl WebSocketWrite for PtyWrite {
         match frame.opcode {
             O::Text | O::Binary => self
                 .0
-                .send(frame.payload)
+                .send(frame.payload.into())
                 .await
                 .map_err(|x| WispError::WsImplError(Box::new(x))),
             O::Close => self

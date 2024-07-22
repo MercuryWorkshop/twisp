@@ -11,7 +11,8 @@ use hyper::{
 };
 use tokio::{
     io::{copy, split},
-    net::TcpStream, time::sleep,
+    net::TcpStream,
+    time::sleep,
 };
 use wisp_mux::{
     extensions::{AnyProtocolExtension, ProtocolExtension, ProtocolExtensionBuilder},
@@ -158,11 +159,13 @@ async fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let (rx, tx) = ws.split(tokio::io::split);
     let rx = FragmentCollectorRead::new(rx);
 
-    let (mux, fut) = ClientMux::new(
+    let (mux, fut) = ClientMux::create(
         rx,
         tx,
         Some(&[Box::new(TWispClientProtocolExtensionBuilder())]),
     )
+    .await?
+    .with_required_extensions(&[TWispClientProtocolExtension::ID])
     .await?;
 
     tokio::spawn(async move { dbg!(fut.await) });
