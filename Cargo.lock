@@ -307,9 +307,9 @@ dependencies = [
 
 [[package]]
 name = "fastwebsockets"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93da8b19e29f202ef35ddd20ddea8c86166850fce5ba2a3c3f3e3174cdbb0620"
+checksum = "26da0c7b5cef45c521a6f9cdfffdfeb6c9f5804fbac332deb5ae254634c7a6be"
 dependencies = [
  "base64",
  "bytes",
@@ -319,20 +319,6 @@ dependencies = [
  "pin-project",
  "rand",
  "sha1",
- "simdutf8",
- "thiserror",
- "tokio",
- "utf-8",
-]
-
-[[package]]
-name = "fastwebsockets"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26da0c7b5cef45c521a6f9cdfffdfeb6c9f5804fbac332deb5ae254634c7a6be"
-dependencies = [
- "bytes",
- "rand",
  "simdutf8",
  "thiserror",
  "tokio",
@@ -1052,7 +1038,7 @@ dependencies = [
  "bytes",
  "clap",
  "env_logger",
- "fastwebsockets 0.7.2",
+ "fastwebsockets",
  "futures-util",
  "http-body-util",
  "hyper",
@@ -1073,12 +1059,13 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
- "fastwebsockets 0.7.2",
+ "fastwebsockets",
  "futures",
  "http-body-util",
  "hyper",
  "nix",
  "tokio",
+ "tokio-util",
  "wisp-mux",
 ]
 
@@ -1330,7 +1317,7 @@ dependencies = [
  "bytes",
  "dashmap",
  "event-listener",
- "fastwebsockets 0.8.0",
+ "fastwebsockets",
  "flume",
  "futures",
  "futures-timer",

@@ -14,6 +14,7 @@ use tokio::{
 	net::TcpStream,
 	time::sleep,
 };
+use tokio_util::compat::{FuturesAsyncReadCompatExt, FuturesAsyncWriteCompatExt};
 use wisp_mux::{
 	extensions::{AnyProtocolExtension, ProtocolExtension, ProtocolExtensionBuilder},
 	ws::{LockedWebSocketWrite, WebSocketRead},
@@ -178,9 +179,9 @@ async fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 		)
 		.await?;
 	let pext_stream = stream.get_protocol_extension_stream();
-	let stream = stream.into_io().into_asyncrw();
-
-	let (mut rx, mut tx) = split(stream);
+	let (rx, tx) = stream.into_io().into_asyncrw().into_split();
+	let mut rx = rx.compat();
+	let mut tx = tx.compat_write();
 
 	let mut handles = Vec::new();
 
