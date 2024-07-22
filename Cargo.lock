@@ -87,16 +87,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async_io_stream"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6d7b9decdf35d8908a7e3ef02f64c5e9b1695e230154c0e8de3969142d9b94c"
-dependencies = [
- "futures",
- "rustc_version",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,6 +319,20 @@ dependencies = [
  "pin-project",
  "rand",
  "sha1",
+ "simdutf8",
+ "thiserror",
+ "tokio",
+ "utf-8",
+]
+
+[[package]]
+name = "fastwebsockets"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26da0c7b5cef45c521a6f9cdfffdfeb6c9f5804fbac332deb5ae254634c7a6be"
+dependencies = [
+ "bytes",
+ "rand",
  "simdutf8",
  "thiserror",
  "tokio",
@@ -874,15 +878,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
-name = "rustc_version"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
-dependencies = [
- "semver",
-]
-
-[[package]]
 name = "rustix"
 version = "0.38.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -901,12 +896,6 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "semver"
-version = "1.0.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61697e0a1c7e512e84a621326239844a24d8207b4669b41bc18b32ea5cbf988b"
 
 [[package]]
 name = "sha1"
@@ -1063,7 +1052,7 @@ dependencies = [
  "bytes",
  "clap",
  "env_logger",
- "fastwebsockets",
+ "fastwebsockets 0.7.2",
  "futures-util",
  "http-body-util",
  "hyper",
@@ -1084,7 +1073,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
- "fastwebsockets",
+ "fastwebsockets 0.7.2",
  "futures",
  "http-body-util",
  "hyper",
@@ -1333,16 +1322,15 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "wisp-mux"
-version = "4.0.1"
+version = "5.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9de4bc333d8bff69b66032587cae7f1ca732455e58e077794731e8325f0f7f1"
+checksum = "33bb6ee12e85ac356ea1dba3b92ba32a330175019c318dbf5fae955998cbeb4b"
 dependencies = [
  "async-trait",
- "async_io_stream",
  "bytes",
  "dashmap",
  "event-listener",
- "fastwebsockets",
+ "fastwebsockets 0.8.0",
  "flume",
  "futures",
  "futures-timer",

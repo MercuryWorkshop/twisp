@@ -20,4 +20,4 @@ pty-process = { version = "0.4.0", features = ["async", "tokio"] }
 rustix = "0.38.32"
 tokio = { version = "1.37.0", features = ["full"] }
 tokio-util = { version = "0.7.11", features = ["codec", "compat"] }
-wisp-mux = { version = "4.0.1", features = ["fastwebsockets"] }
+wisp-mux = { version = "5.0.1", features = ["fastwebsockets"] }
