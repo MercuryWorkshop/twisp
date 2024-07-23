@@ -9,11 +9,7 @@ use hyper::{
 	header::{CONNECTION, UPGRADE},
 	Request,
 };
-use tokio::{
-	io::{copy, split},
-	net::TcpStream,
-	time::sleep,
-};
+use tokio::{io::copy, net::TcpStream, time::sleep};
 use tokio_util::compat::{FuturesAsyncReadCompatExt, FuturesAsyncWriteCompatExt};
 use wisp_mux::{
 	extensions::{AnyProtocolExtension, ProtocolExtension, ProtocolExtensionBuilder},
