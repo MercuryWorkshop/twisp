@@ -11,7 +11,7 @@ use wisp_mux::{
 };
 
 pub async fn open_pty(file: &PathBuf) -> Result<(PtyRead, PtyWrite), io::Error> {
-	let rx = File::options().read(true).write(true).open(file).await?;
+	let rx = File::options().read(true).write(false).open(file).await?;
 	let mut termios = nix::sys::termios::tcgetattr(rx.as_fd())?.clone();
 	nix::sys::termios::cfmakeraw(&mut termios);
 	nix::sys::termios::tcsetattr(rx.as_fd(), nix::sys::termios::SetArg::TCSANOW, &termios)?;
@@ -20,7 +20,7 @@ pub async fn open_pty(file: &PathBuf) -> Result<(PtyRead, PtyWrite), io::Error> 
 		.max_frame_length(usize::MAX)
 		.new_framed(rx);
 
-	let tx = File::options().read(true).write(true).open(file).await?;
+	let tx = File::options().read(false).write(true).open(file).await?;
 	let mut termios = nix::sys::termios::tcgetattr(tx.as_fd())?.clone();
 	nix::sys::termios::cfmakeraw(&mut termios);
 	nix::sys::termios::tcsetattr(tx.as_fd(), nix::sys::termios::SetArg::TCSANOW, &termios)?;
@@ -69,11 +69,6 @@ impl WebSocketWrite for PtyWrite {
 				.map_err(|x| WispError::WsImplError(Box::new(x))),
 			_ => Err(WispError::WsImplNotSupported),
 		}?;
-		self.0
-			.get_mut()
-			.sync_data()
-			.await
-			.map_err(|x| WispError::WsImplError(Box::new(x)))?;
 		Ok(())
 	}
 
