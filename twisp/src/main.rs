@@ -15,7 +15,6 @@ use async_trait::async_trait;
 use bytes::{Buf, Bytes};
 use clap::{Args, Parser};
 use fastwebsockets::{upgrade, FragmentCollectorRead, WebSocketError};
-use futures_util::TryFutureExt;
 use http_body_util::Empty;
 use hyper::{body::Incoming, server::conn::http1, service::service_fn, Request, Response};
 use hyper_util::rt::TokioIo;
@@ -156,10 +155,14 @@ async fn handle_muxstream(
 	connect: ConnectPacket,
 	stream: MuxStream,
 	map: Arc<Mutex<HashMap<u32, RawFd>>>,
-) -> Result<()> {
-	if connect.stream_type == StreamType::Unknown(STREAM_TYPE_TERM) {
-		let id = stream.stream_id;
-		let mut stream = stream.into_io().into_asyncrw().compat();
+) {
+	if connect.stream_type != StreamType::Unknown(STREAM_TYPE_TERM) {
+		let _ = stream.close(CloseReason::ServerStreamBlockedAddress).await;
+	}
+	let closer = stream.get_close_handle();
+	let id = stream.stream_id;
+	let mut stream = stream.into_io().into_asyncrw().compat();
+	let ret: Result<()> = async {
 		let mut pty = Pty::new()?;
 		let pts = pty.pts()?;
 		pty.resize(Size::new(24, 80))?;
@@ -174,28 +177,26 @@ async fn handle_muxstream(
 			error!("Failed to proxy to pty: {:?}", err);
 		}
 		cmd.wait().await?;
-	} else {
-		stream
-			.close(CloseReason::ServerStreamBlockedAddress)
-			.await?;
+		Ok(())
 	}
-	Ok(())
+	.await;
+	match ret {
+		Ok(_) => {
+			let _ = closer.close(CloseReason::Voluntary).await;
+		}
+		Err(x) => {
+			error!("error while creating pty: {:?}", x);
+			let _ = closer.close(CloseReason::Unexpected).await;
+		}
+	}
 }
 
 async fn handle_mux(server: ServerMux, map: Arc<Mutex<HashMap<u32, RawFd>>>) -> Result<()> {
 	while let Some((connect, stream)) = server.server_new_stream().await {
 		let map = map.clone();
 		tokio::spawn(async move {
-			let close_err = stream.get_close_handle();
-			let close_ok = stream.get_close_handle();
 			let id = stream.stream_id;
-			let _ = handle_muxstream(connect, stream, map.clone())
-				.or_else(|err| async move {
-					let _ = close_err.close(CloseReason::Unexpected).await;
-					Err(err)
-				})
-				.and_then(|_| async move { Ok(close_ok.close(CloseReason::Voluntary).await?) })
-				.await;
+			handle_muxstream(connect, stream, map.clone()).await;
 			map.lock().await.remove(&id);
 		});
 	}
