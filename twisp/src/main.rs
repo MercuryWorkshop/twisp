@@ -20,8 +20,8 @@ use hyper::{body::Incoming, server::conn::http1, service::service_fn, Request, R
 use hyper_util::rt::TokioIo;
 use log::{error, info, LevelFilter};
 use pty_process::{Command, Pty, Size};
-use tokio::{io::copy_bidirectional, net::TcpListener, sync::Mutex};
-use tokio_util::compat::FuturesAsyncReadCompatExt;
+use tokio::{io::copy, net::TcpListener, select, sync::Mutex};
+use tokio_util::compat::{FuturesAsyncReadCompatExt, FuturesAsyncWriteCompatExt};
 use wisp_mux::{
 	extensions::{AnyProtocolExtension, ProtocolExtension, ProtocolExtensionBuilder},
 	ws::{LockedWebSocketWrite, WebSocketRead},
@@ -161,7 +161,7 @@ async fn handle_muxstream(
 	}
 	let closer = stream.get_close_handle();
 	let id = stream.stream_id;
-	let mut stream = stream.into_io().into_asyncrw().compat();
+	let stream = stream.into_io().into_asyncrw();
 	let ret: Result<()> = async {
 		let mut pty = Pty::new()?;
 		let pts = pty.pts()?;
@@ -173,10 +173,18 @@ async fn handle_muxstream(
 			.collect();
 		map.lock().await.insert(id, pty.as_raw_fd());
 		let mut cmd = Command::new(&args[0]).args(&args[1..]).spawn(&pts)?;
-		if let Err(err) = copy_bidirectional(&mut stream, &mut pty).await {
-			error!("Failed to proxy to pty: {:?}", err);
-		}
-		cmd.kill().await?;
+
+		let (mut ptyrx, mut ptytx) = pty.split();
+		let (streamrx, streamtx) = stream.into_split();
+		let mut streamrx = streamrx.compat();
+		let mut streamtx = streamtx.compat_write();
+
+		select! {
+			x = copy(&mut ptyrx, &mut streamtx) => x.map(|_| {}),
+			x = copy(&mut streamrx, &mut ptytx) => x.map(|_| {}),
+			x = cmd.wait() => x.map(|_| {}),
+		}?;
+		let _ = cmd.kill().await;
 		Ok(())
 	}
 	.await;
