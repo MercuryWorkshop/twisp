@@ -166,10 +166,9 @@ async fn handle_muxstream(
 		let mut pty = Pty::new()?;
 		let pts = pty.pts()?;
 		pty.resize(Size::new(24, 80))?;
-		let args: Vec<OsString> = connect
-			.destination_hostname
-			.split(' ')
-			.map(|x| x.to_string().into())
+		let args: Vec<OsString> = shell_words::split(&connect.destination_hostname)?
+			.iter()
+			.map(|x| x.into())
 			.collect();
 		map.lock().await.insert(id, pty.as_raw_fd());
 		let mut cmd = Command::new(&args[0]).args(&args[1..]).spawn(&pts)?;
