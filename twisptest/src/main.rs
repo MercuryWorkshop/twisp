@@ -170,7 +170,7 @@ async fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 	let stream = mux
 		.client_new_stream(
 			StreamType::Unknown(STREAM_TYPE_TERM),
-			"/bin/fish".to_owned(),
+			"/bin/fish --private".to_owned(),
 			0,
 		)
 		.await?;

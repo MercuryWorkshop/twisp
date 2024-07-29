@@ -176,7 +176,7 @@ async fn handle_muxstream(
 		if let Err(err) = copy_bidirectional(&mut stream, &mut pty).await {
 			error!("Failed to proxy to pty: {:?}", err);
 		}
-		cmd.wait().await?;
+		cmd.kill().await?;
 		Ok(())
 	}
 	.await;
