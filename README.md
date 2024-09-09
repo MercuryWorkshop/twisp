@@ -14,6 +14,9 @@ socket = "file"
 transport = "lengthdelimitedle"
 file_raw_mode = true
 
+[wisp]
+wisp_v2 = true
+
 [stream]
 allow_twisp = true
 ```
