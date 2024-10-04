@@ -9,8 +9,7 @@ Compile epoxy-server with the `twisp` feature.
 Use the following config to replicate `twisp --pty /path/to/pty` behavior:
 ```toml
 [server]
-bind = "/path/to/pty"
-socket = "file"
+bind = ["file", "/path/to/pty"]
 transport = "lengthdelimitedle"
 file_raw_mode = true
 
